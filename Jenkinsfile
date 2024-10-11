@@ -59,10 +59,10 @@ pipeline {
                     sleep 10
 
                     # Tester si cast-service répond sur le port 8081
-                    curl localhost:8081 || exit 1
+                    curl localhost:8090 || exit 1
 
                     # Tester si movie-service répond sur le port 8082
-                    curl localhost:8082 || exit 1
+                    curl localhost:8001 || exit 1
                     '''
                 }
             }
