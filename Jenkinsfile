@@ -99,7 +99,7 @@ pipeline {
                     cat $KUBECONFIG > .kube/config
                     sed -i "s+tag.*+tag: ${DOCKER_TAG_CAST}+g" ./cast_service/values.yml
                     sed -i "s+tag.*+tag: ${DOCKER_TAG_MOVIE}+g" ./movie_service/values.yml
-		    ls 
+		    ls ./cast_service 
                     cat ./cast_service/values.yml
                     helm upgrade --install app-cast ./cast_service --values=./cast_service/values.yml --namespace dev
                     helm upgrade --install app-movie ./movie_service --values= ./movie_service/values.yml --namespace dev
