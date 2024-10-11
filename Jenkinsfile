@@ -119,11 +119,11 @@ pipeline {
                     rm -Rf .kube
                     mkdir .kube
                     cat $KUBECONFIG > .kube/config
-                    sed -i "s+tag.*+tag: ${DOCKER_TAG_CAST}+g" ./cast_service/values.yml
-                    sed -i "s+tag.*+tag: ${DOCKER_TAG_MOVIE}+g" ./movie_service/values.yml
-                    helm upgrade --install app-cast ./cast_service --values=./cast_service/values.yml --namespace staging
-                    helm upgrade --install app-movie ./movie_service --values=./movie_service/values.yml --namespace staging
-                    helm upgrade --install app-nginx ./nginx --values=./nginx/values.yml --namespace staging
+                    sed -i "s+tag.*+tag: ${DOCKER_TAG_CAST}+g" ./cast_service/values.yaml
+                    sed -i "s+tag.*+tag: ${DOCKER_TAG_MOVIE}+g" ./movie_service/values.yaml
+                    helm upgrade --install app-cast ./cast_service --values=./cast_service/values.yaml --namespace staging
+                    helm upgrade --install app-movie ./movie_service --values=./movie_service/values.yaml --namespace staging
+                    helm upgrade --install app-nginx ./nginx --values=./nginx/values.yaml --namespace staging
                     '''
                 }
             }
@@ -144,11 +144,11 @@ pipeline {
                     rm -Rf .kube
                     mkdir .kube
                     cat $KUBECONFIG > .kube/config
-                    sed -i "s+tag.*+tag: ${DOCKER_TAG_CAST}+g" ./cast_service/values.yml
-                    sed -i "s+tag.*+tag: ${DOCKER_TAG_MOVIE}+g" ./movie_service/values.yml
-                    helm upgrade --install app-cast ./cast_service --values=./cast_service/values.yml --namespace prod
-                    helm upgrade --install app-movie ./movie_service --values=./movie_service/values.yml --namespace prod
-                    helm upgrade --install app-nginx ./nginx --values=./nginx/values.yml --namespace prod
+                    sed -i "s+tag.*+tag: ${DOCKER_TAG_CAST}+g" ./cast_service/values.yaml
+                    sed -i "s+tag.*+tag: ${DOCKER_TAG_MOVIE}+g" ./movie_service/values.yaml
+                    helm upgrade --install app-cast ./cast_service --values=./cast_service/values.yaml --namespace prod
+                    helm upgrade --install app-movie ./movie_service --values=./movie_service/values.yaml --namespace prod
+                    helm upgrade --install app-nginx ./nginx --values=./nginx/values.yaml --namespace prod
                     '''
                 }
             }
