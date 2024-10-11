@@ -4,10 +4,10 @@ pipeline {
         DOCKER_ID = "mira797"
         DOCKER_IMAGE_CAST = "cast-service"
         DOCKER_IMAGE_MOVIE = "movie-service"
-        #DOCKER_IMAGE_NGINX = "nginx"
+        // DOCKER_IMAGE_NGINX = "nginx"
         DOCKER_TAG_CAST = "cast-v.${BUILD_ID}.0" // Tag spécifique pour cast-service
         DOCKER_TAG_MOVIE = "movie-v.${BUILD_ID}.0" // Tag spécifique pour movie-service
-        #DOCKER_TAG_NGINX = "nginx-v.${BUILD_ID}.0"  // Tag pour nginx 
+        // DOCKER_TAG_NGINX = "nginx-v.${BUILD_ID}.0"  // Tag pour nginx 
     }
 
 agent any // Jenkins will be able to select all available agents
@@ -15,18 +15,18 @@ stages {
         stage('Docker Build of all images '){ // docker build image stage
             steps {                script {
                     sh '''
-                    # Supprimer tous les conteneurs s'ils existent
+                    // Supprimer tous les conteneurs s'ils existent
                     if [ "$(docker ps -aq)" ]; then
                         docker rm -f $(docker ps -aq)
                     fi
                     
-                    # Build de l'image cast-service
+                    // Build de l'image cast-service
                     docker build -t $DOCKER_ID/$DOCKER_IMAGE_CAST:$DOCKER_TAG_CAST ./cast-service || exit 1
 
-                    # Build de l'image movie-service
+                    // Build de l'image movie-service
                     docker build -t $DOCKER_ID/$DOCKER_IMAGE_MOVIE:$DOCKER_TAG_MOVIE ./movie-service || exit 1
-                    # Pause de 6 secondes (si nécessaire)
-                    #docker build -t $DOCKER_ID/$DOCKER_IMAGE_NGINX:$DOCKER_TAG_NGINX ./nginx || exit 1
+                    // Pause de 6 secondes (si nécessaire)
+                    //docker build -t $DOCKER_ID/$DOCKER_IMAGE_NGINX:$DOCKER_TAG_NGINX ./nginx || exit 1
                     sleep 6
                     '''
                 }
@@ -36,13 +36,13 @@ stages {
                 steps {
                     script {
                     sh '''
-                    # Exécuter cast-service sur le port 8080
+                    // Exécuter cast-service sur le port 8080
 		    docker run -d -p 8081:8080 --name cast-service $DOCKER_ID/$DOCKER_IMAGE_CAST:$DOCKER_TAG_CAST
 
-	            # Exécuter movie-service sur le port 8081
+	            // Exécuter movie-service sur le port 8081
 		    docker run -d -p 8082:8080 --name movie-service $DOCKER_ID/$DOCKER_IMAGE_MOVIE:$DOCKER_TAG_MOVIE
 
-                    #docker run -d -p 8083:8080 --name nginx $DOCKER_ID/$DOCKER_IMAGE_MOVIE:$DOCKER_TAG_MOVIE
+                    // docker run -d -p 8083:8080 --name nginx $DOCKER_ID/$DOCKER_IMAGE_MOVIE:$DOCKER_TAG_MOVIE
                     sleep 10
                     '''
                     }
@@ -54,10 +54,10 @@ stages {
                     script {
 	            sleep 10
 
-	            # Tester si cast-service répond sur le port 8081
+	            // Tester si cast-service répond sur le port 8081
 	            curl localhost:8081 || exit 1
 
-	            # Tester si movie-service répond sur le port 8082
+	            // Tester si movie-service répond sur le port 8082
 	            curl localhost:8082 || exit 1
 	            '''
                     }
