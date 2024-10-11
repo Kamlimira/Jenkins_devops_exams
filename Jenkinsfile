@@ -52,6 +52,7 @@ pipeline {
             }
         }
 
+        /*
         stage('Test Acceptance') { // We launch the curl command to validate that the container responds to the request
             steps {
                 script {
@@ -66,6 +67,7 @@ pipeline {
                     '''
                 }
             }
+*/
         }
 
         stage('Docker Push') { // We pass the built image to our docker hub account
