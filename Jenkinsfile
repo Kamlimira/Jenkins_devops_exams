@@ -67,8 +67,8 @@ pipeline {
                     '''
                 }
             }
-*/
         }
+       */
 
         stage('Docker Push') { // We pass the built image to our docker hub account
             environment {
