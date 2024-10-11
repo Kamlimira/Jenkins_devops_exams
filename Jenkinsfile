@@ -40,10 +40,10 @@ pipeline {
                 script {
                     sh '''
                     # Exécuter cast-service sur le port 8081
-                    docker run -d -p 8081:8080 --name cast-service $DOCKER_ID/$DOCKER_IMAGE_CAST:$DOCKER_TAG_CAST
+                    docker run -d -p 8090:8000 --name cast-service $DOCKER_ID/$DOCKER_IMAGE_CAST:$DOCKER_TAG_CAST
 
                     # Exécuter movie-service sur le port 8082 (pas 8081 pour éviter le conflit)
-                    docker run -d -p 8082:8080 --name movie-service $DOCKER_ID/$DOCKER_IMAGE_MOVIE:$DOCKER_TAG_MOVIE
+                    docker run -d -p 8001:8000 --name movie-service $DOCKER_ID/$DOCKER_IMAGE_MOVIE:$DOCKER_TAG_MOVIE
 
                     # docker run -d -p 8083:8080 --name nginx $DOCKER_ID/$DOCKER_IMAGE_NGINX:$DOCKER_TAG_NGINX
                     sleep 10
