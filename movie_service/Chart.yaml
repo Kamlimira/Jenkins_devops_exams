@@ -1,0 +1,4 @@
+apiVersion: v2
+name: movie_service
+description: A Helm chart for Movie Service
+version: 0.1.0

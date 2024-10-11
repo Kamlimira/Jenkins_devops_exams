@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cast-service
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cast-service
+  template:
+    metadata:
+      labels:
+        app: cast-service
+    spec:
+      containers:
+      - name: cast-service
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        command: ["uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+        ports:
+        - containerPort: {{ .Values.service.targetPort }}
+        env:
+        - name: DATABASE_URI
+          value: "{{ .Values.env.databaseUri }}"
+        - name: CAST_SERVICE_HOST_URL
+          value: "{{ .Values.env.castServiceHostUrl }}"

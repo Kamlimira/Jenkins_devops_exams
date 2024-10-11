@@ -1,0 +1,24 @@
+namespace: dev  # Namespace où le service sera déployé
+
+replicaCount: 1  # Nombre de répliques du service
+
+image:
+  repository: mira797/movie-service  # Image Docker pour le service
+  tag: latest  # Tag de l'image Docker
+  pullPolicy: Always                 # Ensures Kubernetes always pulls the image
+
+service:
+  type: ClusterIP  # Type de service Kubernetes (peut être ClusterIP, NodePort, ou LoadBalancer)
+  port: 8001  # Port externe du service
+  targetPort: 8000  # Port interne du conteneur
+
+env:
+  #databaseUri: "postgresql://nouvel_utilisateur:nouveau_mot_de_passe@movie_db/movie_db_dev"  # URI de la base de données
+  databaseUri: "postgresql://nouvel_utilisateur:super_secret_password@movie-db:5432/movie_db" 
+  castServiceHostUrl: "http://cast-service:8000/api/v1/casts/"  # URL de l'API Cast Service
+
+
+movieService:  # Section pour le service movie-service
+  name: movie-service  # Nom du service
+  label: movie-service  # Label du service
+  containerName: movie-service  # Nom du conteneur dans le pod

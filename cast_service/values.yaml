@@ -1,0 +1,32 @@
+namespace: dev
+
+replicaCount: 1
+image:
+  repository: mira797/cast-service
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  port: 8090
+  targetPort: 8000
+
+env:
+  #databaseUri: "postgresql://cast_db_username:cast_db_password@cast-db/cast_db_dev"
+  databaseUri: "postgresql://cast_db_username:cast_db_password@cast-db/cast_db_dev"
+  castServiceHostUrl: "http://cast-service:8000/api/v1/casts/"
+
+postgres:
+  user: cast_db_username
+  password: cast_db_password
+  db: cast_db
+
+pvc:
+  storageClassName: local-path
+  accessMode: ReadWriteOnce
+  storage: 1Gi
+
+castService:
+  name: cast-service
+  label: cast-service
+  containerName: cast-service

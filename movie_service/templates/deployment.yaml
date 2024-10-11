@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.movieService.name }}  # Nom du service (défini dans values.yaml)
+  namespace: {{ .Values.namespace }}  # Namespace dans lequel le service sera déployé
+spec:
+  replicas: {{ .Values.replicaCount }}  # Nombre de réplicas (défini dans values.yaml)
+  selector:
+    matchLabels:
+      app: {{ .Values.movieService.name }}  # Correspondance avec les pods étiquetés avec le même nom
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.movieService.name }}  # Labels assignés aux pods créés par ce déploiement
+    spec:
+      initContainers:
+      - name: wait-for-db  # Conteneur qui attend que la base de données soit prête
+        image: busybox
+        command: ['sh', '-c', 'until nc -z -v -w30 movie-db 5432; do echo "waiting for database"; sleep 5; done']
+        # Cette commande vérifie la disponibilité du service 'movie-db' sur le port 5432
+
+      containers:
+      - name: {{ .Values.movieService.name }}  # Nom du conteneur (identique au service)
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"  # Image du conteneur (définie dans values.yaml)
+        imagePullPolicy: Always  # Toujours récupérer la dernière image
+        command: ["uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]  # Lancement de FastAPI
+        ports:
+        - containerPort: {{ .Values.service.targetPort }}  # Port interne (défini dans values.yaml)
+        
+        env:
+        - name: DATABASE_URI
+          value: {{ .Values.env.databaseUri }}  # URI de connexion à la base de données (défini dans values.yaml)
+        - name: CAST_SERVICE_HOST_URL
+          value: {{ .Values.env.castServiceHostUrl }}  # URL du service de cast (défini dans values.yaml)
+
+        # Décommentez si vous avez besoin d'un volume monté pour l'application
+        # volumeMounts:
+        # - name: app-volume
+

@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  namespace: {{ .Values.namespace }} 
+spec:
+  replicas: 1  # Nombre de réplicas (ici 1 instance de Nginx)
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:latest  # Utilise l'image standard de Nginx
+          ports:
+            - containerPort: 8081  # Port sur lequel Nginx écoute
+          volumeMounts:
+            - name: nginx-config-volume
+              mountPath: /etc/nginx/conf.d/nginx_custom.conf  # Monte le fichier dans conf.d/
+              subPath: nginx_config.conf  # Spécifie le fichier exact depuis le ConfigMap
+      volumes:
+        - name: nginx-config-volume
+          configMap:
+            name: nginx-config  # Le nom du ConfigMap qui contient nginx_config.conf
