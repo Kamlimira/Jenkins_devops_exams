@@ -151,6 +151,9 @@ pipeline {
 		    kubectl annotate pv movie-db-st meta.helm.sh/release-name- --overwrite
 		    kubectl annotate pv movie-db-st meta.helm.sh/release-namespace- --overwrite
 
+		    kubectl annotate pv movie-db-st meta.helm.sh/release-name=app-movie-staging --overwrite
+		    kubectl annotate pv movie-db-st meta.helm.sh/release-namespace=staging --overwrite
+
                     # Déploiement via Helm dans staging
                     helm upgrade --install app-cast-staging ./cast_service --values=./cast_service/values.yaml --namespace staging
                     helm upgrade --install app-movie-staging ./movie_service --values=./movie_service/values.yaml --namespace staging
