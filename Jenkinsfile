@@ -86,20 +86,46 @@ pipeline {
             }
         }
 
-        stage('Deployment in dev') {
-            environment {
-                KUBECONFIG = credentials("config") // We retrieve kubeconfig from secret file saved on Jenkins
+        stage('Configure Kubernetes Access') {
+        	environment
+        	{
+       		KUBECONFIG = credentials("config") // we retrieve kubeconfig from secret file called config saved on jenkins
+	    	}
+            steps {
+                // Créer le répertoire .kube et ajouter le fichier kubeconfig
+                sh '''
+                rm -Rf .kube
+                mkdir -p ~/.kube
+                echo "$KUBECONFIG" > ~/.kube/config
+                chmod 600 ~/.kube/config
+                '''
             }
+        }
 
+        stage('Prepare Kubernetes Secrets') {
+            steps {
+                // Supprimer les secrets dans plusieurs namespaces
+                sh '''
+                kubectl delete secret postgres-secret --namespace dev || echo "Secret not found in dev, skipping deletion"
+                kubectl delete secret postgres-secret --namespace staging || echo "Secret not found in staging, skipping deletion"
+                kubectl delete secret postgres-secret --namespace prod || echo "Secret not found in prod, skipping deletion"
+                '''
+            }
+        }
+
+
+
+        stage('Deployment in dev') {
             steps {
                 script {
                     sh '''
-                    rm -Rf .kube
-                    mkdir .kube
-                    cat $KUBECONFIG > .kube/config
+                    #rm -Rf .kube
+                    #mkdir .kube
+                    #cat $KUBECONFIG > .kube/config
                     ls -l ./movie_service/values.yaml
                     sed -i "s+tag.*+tag: ${DOCKER_TAG_CAST}+g" ./cast_service/values.yaml
                     sed -i "s+tag.*+tag: ${DOCKER_TAG_MOVIE}+g" ./movie_service/values.yaml
+
                     helm upgrade --install app-cast ./cast_service --values=./cast_service/values.yaml --namespace dev
                     helm upgrade --install app-movie ./movie_service --values= ./movie_service/values.yaml --namespace dev
                     helm upgrade --install app-nginx ./nginx --values= ./nginx/values.yaml --namespace dev
@@ -109,16 +135,17 @@ pipeline {
         }
 
         stage('Deployment in staging') {
-            environment {
-                KUBECONFIG = credentials("config") // We retrieve kubeconfig from secret file saved on Jenkins
-            }
 
             steps {
                 script {
                     sh '''
-                    rm -Rf .kube
-                    mkdir .kube
-                    cat $KUBECONFIG > .kube/config
+                    #rm -Rf .kube
+                    #mkdir .kube
+                    #cat $KUBECONFIG > .kube/config
+		    
+		    sed -i "s/namespace: dev/namespace: staging/g" ./cast_service/values.yaml
+                    sed -i "s/namespace: dev/namespace: staging/g" ./movie_service/values.yaml
+
                     sed -i "s+tag.*+tag: ${DOCKER_TAG_CAST}+g" ./cast_service/values.yaml
                     sed -i "s+tag.*+tag: ${DOCKER_TAG_MOVIE}+g" ./movie_service/values.yaml
                     helm upgrade --install app-cast ./cast_service --values=./cast_service/values.yaml --namespace staging
@@ -130,9 +157,7 @@ pipeline {
         }
 
         stage('Deployment in prod') {
-            environment {
-                KUBECONFIG = credentials("config") // We retrieve kubeconfig from secret file saved on Jenkins
-            }
+
 
             steps {
                 timeout(time: 15, unit: "MINUTES") {
@@ -141,9 +166,12 @@ pipeline {
 
                 script {
                     sh '''
-                    rm -Rf .kube
-                    mkdir .kube
-                    cat $KUBECONFIG > .kube/config
+                    #rm -Rf .kube
+                    #mkdir .kube
+                    #cat $KUBECONFIG > .kube/config
+                    sed -i "s/namespace: dev/namespace: prod/g" ./cast_service/values.yaml
+                    sed -i "s/namespace: dev/namespace: prod/g" ./movie_service/values.yaml
+
                     sed -i "s+tag.*+tag: ${DOCKER_TAG_CAST}+g" ./cast_service/values.yaml
                     sed -i "s+tag.*+tag: ${DOCKER_TAG_MOVIE}+g" ./movie_service/values.yaml
                     helm upgrade --install app-cast ./cast_service --values=./cast_service/values.yaml --namespace prod
