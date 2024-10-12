@@ -154,9 +154,9 @@ pipeline {
                     #kubectl annotate deployment nginx -n dev "meta.helm.sh/release-namespace-" --overwrite
 
                     # Déploiement via Helm dans staging
-                    helm upgrade --install app-cast_staging ./cast_service --values=./cast_service/values.yaml --namespace staging
-                    helm upgrade --install app-movie_staging ./movie_service --values=./movie_service/values.yaml --namespace staging
-                    helm upgrade --install app-nginx_staging ./nginx --values=./nginx/values.yaml --namespace staging
+                    helm upgrade --install app-cast-staging ./cast_service --values=./cast_service/values.yaml --namespace staging
+                    helm upgrade --install app-movie-staging ./movie_service --values=./movie_service/values.yaml --namespace staging
+                    helm upgrade --install app-nginx-staging ./nginx --values=./nginx/values.yaml --namespace staging
                     '''
                 }
             }
@@ -186,9 +186,9 @@ pipeline {
                     cat ./cast_service/values.yaml
 
                     # Déploiement via Helm dans prod
-                    helm upgrade --install app-cast_prod ./cast_service --values=./cast_service/values.yaml --namespace prod
-                    helm upgrade --install app-movie_prod ./movie_service --values=./movie_service/values.yaml --namespace prod
-                    helm upgrade --install app-nginx_prod ./nginx --values=./nginx/values.yaml --namespace prod
+                    helm upgrade --install app-cast-prod ./cast_service --values=./cast_service/values.yaml --namespace prod
+                    helm upgrade --install app-movie-prod ./movie_service --values=./movie_service/values.yaml --namespace prod
+                    helm upgrade --install app-nginx-prod ./nginx --values=./nginx/values.yaml --namespace prod
                     '''
                 }
             }
