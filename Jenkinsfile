@@ -7,7 +7,6 @@ pipeline {
         // DOCKER_IMAGE_NGINX = "nginx"
         DOCKER_TAG_CAST = "cast-v.${BUILD_ID}.0" // Tag spécifique pour cast-service
         DOCKER_TAG_MOVIE = "movie-v.${BUILD_ID}.0" // Tag spécifique pour movie-service
-        // DOCKER_TAG_NGINX = "nginx-v.${BUILD_ID}.0"  // Tag pour nginx
     }
 
     agent any
@@ -44,31 +43,11 @@ pipeline {
 
                     # Exécuter movie-service sur le port 8001 (pour éviter le conflit de ports)
                     docker run -d -p 8001:8000 --name movie-service $DOCKER_ID/$DOCKER_IMAGE_MOVIE:$DOCKER_TAG_MOVIE
-
-                    # docker run -d -p 8083:8080 --name nginx $DOCKER_ID/$DOCKER_IMAGE_NGINX:$DOCKER_TAG_NGINX
                     sleep 10
                     '''
                 }
             }
         }
-
-        /*
-        stage('Test Acceptance') { // We launch the curl command to validate that the container responds to the request
-            steps {
-                script {
-                    sh '''
-                    sleep 10
-
-                    # Tester si cast-service répond sur le port 8090
-                    curl 3.250.102.222:8090 || exit 1
-
-                    # Tester si movie-service répond sur le port 8001
-                    curl 3.250.102.222:8001 || exit 1
-                    '''
-                }
-            }
-        }
-       */
 
         stage('Docker Push') { // We pass the built image to our Docker Hub account
             environment {
@@ -136,10 +115,11 @@ pipeline {
                     # Assurez-vous que les permissions sont correctes
                     chmod 600 ~/.kube/config
 
-                    ls -l ./movie_service/values.yaml
+                    # Mise à jour des fichiers YAML avec les tags Docker
                     sed -i "s+tag.*+tag: ${DOCKER_TAG_CAST}+g" ./cast_service/values.yaml
                     sed -i "s+tag.*+tag: ${DOCKER_TAG_MOVIE}+g" ./movie_service/values.yaml
 
+                    # Déploiement Helm dans dev
                     helm upgrade --install app-cast ./cast_service --values=./cast_service/values.yaml --namespace dev
                     helm upgrade --install app-movie ./movie_service --values=./movie_service/values.yaml --namespace dev
                     helm upgrade --install app-nginx ./nginx --values=./nginx/values.yaml --namespace dev
@@ -147,21 +127,19 @@ pipeline {
                 }
             }
         }
+
         stage('Deployment in staging') {
             environment {
                 KUBECONFIG = credentials('config') // Retrieve the kubeconfig file from Jenkins credentials
             }
+
             steps {
                 script {
                     sh '''
                     # Supprimer le répertoire .kube s'il existe
                     rm -Rf ~/.kube
-
-                    # Créer le répertoire .kube et y ajouter le fichier kubeconfig
                     mkdir -p ~/.kube
                     echo "$KUBECONFIG" > ~/.kube/config
-
-                    # Assurez-vous que les permissions sont correctes
                     chmod 600 ~/.kube/config
 
                     # Mise à jour des namespaces dans les fichiers de valeurs
@@ -169,19 +147,13 @@ pipeline {
                     sed -i '/namespace:/s/dev/staging/' ./movie_service/values.yaml
                     cat ./cast_service/values.yaml
 
-                    # Annoter le PV pour la base de données db
-                    #kubectl annotate pv db meta.helm.sh/release-namespace=staging --overwrite
-		    kubectl annotate pv movie-db-st meta.helm.sh/release-namespace=staging --overwrite
+                    # Annotation des PV pour le namespace staging
+                    kubectl annotate pv movie-db-st meta.helm.sh/release-namespace=staging --overwrite
                     kubectl annotate svc nginx -n dev "meta.helm.sh/release-namespace=staging" --overwrite
-		    kubectl annotate deployment nginx -n dev "meta.helm.sh/release-name-" --overwrite
-		    kubectl annotate deployment nginx -n dev "meta.helm.sh/release-namespace-" --overwrite
+                    kubectl annotate deployment nginx -n dev "meta.helm.sh/release-name-" --overwrite
+                    kubectl annotate deployment nginx -n dev "meta.helm.sh/release-namespace-" --overwrite
 
-
-                    # Mise à jour des tags Docker dans les fichiers de valeurs
-                    # sed -i "s+tag.*+tag: ${DOCKER_TAG_CAST}+g" ./cast_service/values.yaml
-                    # sed -i "s+tag.*+tag: ${DOCKER_TAG_MOVIE}+g" ./movie_service/values.yaml
-
-                    # Déploiements via Helm
+                    # Déploiement via Helm dans staging
                     helm upgrade --install app-cast ./cast_service --values=./cast_service/values.yaml --namespace staging
                     helm upgrade --install app-movie ./movie_service --values=./movie_service/values.yaml --namespace staging
                     helm upgrade --install app-nginx ./nginx --values=./nginx/values.yaml --namespace staging
@@ -190,7 +162,6 @@ pipeline {
             }
         }
 
-
         stage('Deployment in prod') {
             environment {
                 KUBECONFIG = credentials('config') // Retrieve the kubeconfig file from Jenkins credentials
@@ -198,28 +169,23 @@ pipeline {
 
             steps {
                 timeout(time: 15, unit: "MINUTES") {
-                    input message: 'Do you want to deploy in production ?', ok: 'Yes'
+                    input message: 'Do you want to deploy in production?', ok: 'Yes'
                 }
 
-            steps {
                 script {
                     sh '''
                     # Supprimer le répertoire .kube s'il existe
                     rm -Rf ~/.kube
-
-                    # Créer le répertoire .kube et y ajouter le fichier kubeconfig
                     mkdir -p ~/.kube
                     echo "$KUBECONFIG" > ~/.kube/config
-
-                    # Assurez-vous que les permissions sont correctes
                     chmod 600 ~/.kube/config
 
+                    # Mise à jour des namespaces dans les fichiers de valeurs
                     sed -i '/namespace:/s/staging/prod/' ./cast_service/values.yaml
                     sed -i '/namespace:/s/staging/prod/' ./movie_service/values.yaml
                     cat ./cast_service/values.yaml
 
-                    #sed -i "s+tag.*+tag: ${DOCKER_TAG_CAST}+g" ./cast_service/values.yaml
-                    #sed -i "s+tag.*+tag: ${DOCKER_TAG_MOVIE}+g" ./movie_service/values.yaml
+                    # Déploiement via Helm dans prod
                     helm upgrade --install app-cast ./cast_service --values=./cast_service/values.yaml --namespace prod
                     helm upgrade --install app-movie ./movie_service --values=./movie_service/values.yaml --namespace prod
                     helm upgrade --install app-nginx ./nginx --values=./nginx/values.yaml --namespace prod
@@ -228,5 +194,4 @@ pipeline {
             }
         }
     }
-}
 }
