@@ -24,7 +24,7 @@ postgres:
 pvc:
   storageClassName: local-path
   accessMode: ReadWriteOnce
-  storage: 1Gi
+  storage: 500Mi
 
 castService:
   name: cast-service
