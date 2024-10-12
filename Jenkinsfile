@@ -145,6 +145,7 @@ pipeline {
                     # Mise à jour des namespaces dans les fichiers de valeurs
                     sed -i '/namespace:/s/dev/staging/' ./cast_service/values.yaml
                     sed -i '/namespace:/s/dev/staging/' ./movie_service/values.yaml
+                    sed -i '/namespace:/s/dev/staging/' ./nginx/values.yaml
                     cat ./cast_service/values.yaml
 
                     # Annotation des PV pour le namespace staging
@@ -157,6 +158,7 @@ pipeline {
                     # Déploiement via Helm dans staging
                     helm upgrade --install app-cast-staging ./cast_service --values=./cast_service/values.yaml --namespace staging
                     helm upgrade --install app-movie-staging ./movie_service --values=./movie_service/values.yaml --namespace staging
+
                     helm upgrade --install app-nginx-staging ./nginx --values=./nginx/values.yaml --namespace staging
                     '''
                 }
@@ -184,6 +186,7 @@ pipeline {
                     # Mise à jour des namespaces dans les fichiers de valeurs
                     sed -i '/namespace:/s/staging/prod/' ./cast_service/values.yaml
                     sed -i '/namespace:/s/staging/prod/' ./movie_service/values.yaml
+                    sed -i '/namespace:/s/dev/staging/' ./nginx/values.yaml
                     cat ./cast_service/values.yaml
 
                     # Déploiement via Helm dans prod
