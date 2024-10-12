@@ -17,3 +17,4 @@ spec:
             name: nginx
             port:
               number: 8080
+	      targetPort: 8081
