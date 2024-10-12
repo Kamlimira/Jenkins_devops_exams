@@ -4,8 +4,8 @@ pipeline {
         DOCKER_ID = "mira797"
         DOCKER_IMAGE_CAST = "cast-service"
         DOCKER_IMAGE_MOVIE = "movie-service"
-        DOCKER_TAG_CAST = "cast-v.${BUILD_ID}.0" // Tag spécifique pour cast-service
-        DOCKER_TAG_MOVIE = "movie-v.${BUILD_ID}.0" // Tag spécifique pour movie-service
+        DOCKER_TAG_CAST = "cast-v.${BUILD_ID}.0"
+        DOCKER_TAG_MOVIE = "movie-v.${BUILD_ID}.0"
     }
 
     agent any
@@ -100,19 +100,20 @@ pipeline {
 
         stage('Deployment in dev') {
             environment {
-                KUBECONFIG = credentials('config') // Retrieve the kubeconfig file from Jenkins credentials
+                KUBECONFIG = credentials('config')
             }
             steps {
                 script {
                     sh '''
+                    # Créer ou mettre à jour le ConfigMap pour Nginx dans dev
+                    kubectl create configmap nginx-config --from-file=./nginx/config/nginx_config.conf -n dev --dry-run=client -o yaml | kubectl apply -f -
+
                     # Supprimer le répertoire .kube s'il existe
                     rm -Rf ~/.kube
 
                     # Créer le répertoire .kube et y ajouter le fichier kubeconfig
                     mkdir -p ~/.kube
                     echo "$KUBECONFIG" > ~/.kube/config
-
-                    # Assurez-vous que les permissions sont correctes
                     chmod 600 ~/.kube/config
 
                     # Mise à jour des fichiers YAML avec les tags Docker
@@ -130,11 +131,14 @@ pipeline {
 
         stage('Deployment in staging') {
             environment {
-                KUBECONFIG = credentials('config') // Retrieve the kubeconfig file from Jenkins credentials
+                KUBECONFIG = credentials('config')
             }
             steps {
                 script {
                     sh '''
+                    # Créer ou mettre à jour le ConfigMap pour Nginx dans staging
+                    kubectl create configmap nginx-config --from-file=./nginx/config/nginx_config.conf -n staging --dry-run=client -o yaml | kubectl apply -f -
+
                     # Supprimer le répertoire .kube s'il existe
                     rm -Rf ~/.kube
                     mkdir -p ~/.kube
@@ -145,14 +149,6 @@ pipeline {
                     sed -i '/namespace:/s/dev/staging/' ./cast_service/values.yaml
                     sed -i '/namespace:/s/dev/staging/' ./movie_service/values.yaml
                     sed -i '/namespace:/s/dev/staging/' ./nginx/values.yaml
-                    cat ./cast_service/values.yaml
-
-                    # Annotation des PV pour le namespace staging
-                    kubectl annotate pv movie-db-st meta.helm.sh/release-name- --overwrite
-                    kubectl annotate pv movie-db-st meta.helm.sh/release-namespace- --overwrite
-
-                    kubectl annotate pv movie-db-st meta.helm.sh/release-name=app-movie-staging --overwrite
-                    kubectl annotate pv movie-db-st meta.helm.sh/release-namespace=staging --overwrite
 
                     # Déploiement via Helm dans staging
                     helm upgrade --install app-cast-staging ./cast_service --values=./cast_service/values.yaml --namespace staging
@@ -165,7 +161,7 @@ pipeline {
 
         stage('Deployment in prod') {
             environment {
-                KUBECONFIG = credentials('config') // Retrieve the kubeconfig file from Jenkins credentials
+                KUBECONFIG = credentials('config')
             }
             steps {
                 timeout(time: 15, unit: "MINUTES") {
@@ -174,6 +170,9 @@ pipeline {
 
                 script {
                     sh '''
+                    # Créer ou mettre à jour le ConfigMap pour Nginx dans prod
+                    kubectl create configmap nginx-config --from-file=./nginx/config/nginx_config.conf -n prod --dry-run=client -o yaml | kubectl apply -f -
+
                     # Supprimer le répertoire .kube s'il existe
                     rm -Rf ~/.kube
                     mkdir -p ~/.kube
@@ -184,14 +183,6 @@ pipeline {
                     sed -i '/namespace:/s/staging/prod/' ./cast_service/values.yaml
                     sed -i '/namespace:/s/staging/prod/' ./movie_service/values.yaml
                     sed -i '/namespace:/s/staging/prod/' ./nginx/values.yaml
-                    cat ./cast_service/values.yaml
-
-                    # Annotation des PV pour le namespace prod
-                    kubectl annotate pv movie-db-st meta.helm.sh/release-name- --overwrite
-                    kubectl annotate pv movie-db-st meta.helm.sh/release-namespace- --overwrite
-
-                    kubectl annotate pv movie-db-st meta.helm.sh/release-name=app-movie-prod --overwrite
-                    kubectl annotate pv movie-db-st meta.helm.sh/release-namespace=prod --overwrite
 
                     # Déploiement via Helm dans prod
                     helm upgrade --install app-cast-prod ./cast_service --values=./cast_service/values.yaml --namespace prod
