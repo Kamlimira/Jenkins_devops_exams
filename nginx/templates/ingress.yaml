@@ -2,7 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: nginx-ingress
-  namespace: {{ .Values.namespace }} 
+  namespace: {{ .Values.namespace }}
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
@@ -16,5 +16,4 @@ spec:
           service:
             name: nginx
             port:
-              number: 8080
-	      targetPort: 8081
+              number: 8080  # Port exposé par le service Nginx
