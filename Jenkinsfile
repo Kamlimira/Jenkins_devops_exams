@@ -165,11 +165,12 @@ pipeline {
 
                     # Assurez-vous que les permissions sont correctes
                     chmod 600 ~/.kube/config
-                    sed -i "s/namespace: dev/namespace: staging/g" ./cast_service/values.yaml
-                    sed -i "s/namespace: dev/namespace: staging/g" ./movie_service/values.yaml
-
-                    sed -i "s+tag.*+tag: ${DOCKER_TAG_CAST}+g" ./cast_service/values.yaml
+		    sed -i '/namespace:/s/dev/staging/' ./cast_service/values.yaml
+		    sed -i '/namespace:/s/dev/staging/' ./movie_service/values.yaml
 		    cat ./cast_service/values.yaml
+
+		
+                    sed -i "s+tag.*+tag: ${DOCKER_TAG_CAST}+g" ./cast_service/values.yaml
                     sed -i "s+tag.*+tag: ${DOCKER_TAG_MOVIE}+g" ./movie_service/values.yaml
                     helm upgrade --install app-cast ./cast_service --values=./cast_service/values.yaml --namespace staging
                     helm upgrade --install app-movie ./movie_service --values=./movie_service/values.yaml --namespace staging
