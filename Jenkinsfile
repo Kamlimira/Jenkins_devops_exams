@@ -119,9 +119,23 @@ pipeline {
         }
 
         stage('Deployment in dev') {
+            environment {
+                KUBECONFIG = credentials('config') // Retrieve the kubeconfig file from Jenkins credentials
+            }
+
             steps {
                 script {
                     sh '''
+                    # Supprimer le répertoire .kube s'il existe
+                    rm -Rf ~/.kube
+
+                    # Créer le répertoire .kube et y ajouter le fichier kubeconfig
+                    mkdir -p ~/.kube
+                    echo "$KUBECONFIG" > ~/.kube/config
+
+                    # Assurez-vous que les permissions sont correctes
+                    chmod 600 ~/.kube/config
+
                     ls -l ./movie_service/values.yaml
                     sed -i "s+tag.*+tag: ${DOCKER_TAG_CAST}+g" ./cast_service/values.yaml
                     sed -i "s+tag.*+tag: ${DOCKER_TAG_MOVIE}+g" ./movie_service/values.yaml
