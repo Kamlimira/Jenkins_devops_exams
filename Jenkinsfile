@@ -186,6 +186,10 @@ pipeline {
                     sed -i '/namespace:/s/staging/prod/' ./cast_service/values.yaml
                     sed -i '/namespace:/s/staging/prod/' ./movie_service/values.yaml
                     sed -i '/namespace:/s/staging/prod/' ./nginx/values.yaml
+		   
+ 		    kubectl annotate pv movie-db-st meta.helm.sh/release-name=app-movie-prod --overwrite
+                    kubectl annotate pv movie-db-st meta.helm.sh/release-namespace=prod --overwrite
+
 
                     # Déploiement via Helm dans prod
                     helm upgrade --install app-cast-prod ./cast_service --values=./cast_service/values.yaml --namespace prod
