@@ -148,15 +148,15 @@ pipeline {
                     cat ./cast_service/values.yaml
 
                     # Annotation des PV pour le namespace staging
-                    kubectl annotate pv movie-db-st meta.helm.sh/release-namespace=staging --overwrite
-                    kubectl annotate svc nginx -n dev "meta.helm.sh/release-namespace=staging" --overwrite
-                    kubectl annotate deployment nginx -n dev "meta.helm.sh/release-name-" --overwrite
-                    kubectl annotate deployment nginx -n dev "meta.helm.sh/release-namespace-" --overwrite
+                    #kubectl annotate pv movie-db-st meta.helm.sh/release-namespace=staging --overwrite
+                    #kubectl annotate svc nginx -n dev "meta.helm.sh/release-namespace=staging" --overwrite
+                    #kubectl annotate deployment nginx -n dev "meta.helm.sh/release-name-" --overwrite
+                    #kubectl annotate deployment nginx -n dev "meta.helm.sh/release-namespace-" --overwrite
 
                     # Déploiement via Helm dans staging
-                    helm upgrade --install app-cast ./cast_service --values=./cast_service/values.yaml --namespace staging
-                    helm upgrade --install app-movie ./movie_service --values=./movie_service/values.yaml --namespace staging
-                    helm upgrade --install app-nginx ./nginx --values=./nginx/values.yaml --namespace staging
+                    helm upgrade --install app-cast_staging ./cast_service --values=./cast_service/values.yaml --namespace staging
+                    helm upgrade --install app-movie_staging ./movie_service --values=./movie_service/values.yaml --namespace staging
+                    helm upgrade --install app-nginx_staging ./nginx --values=./nginx/values.yaml --namespace staging
                     '''
                 }
             }
@@ -186,9 +186,9 @@ pipeline {
                     cat ./cast_service/values.yaml
 
                     # Déploiement via Helm dans prod
-                    helm upgrade --install app-cast ./cast_service --values=./cast_service/values.yaml --namespace prod
-                    helm upgrade --install app-movie ./movie_service --values=./movie_service/values.yaml --namespace prod
-                    helm upgrade --install app-nginx ./nginx --values=./nginx/values.yaml --namespace prod
+                    helm upgrade --install app-cast_prod ./cast_service --values=./cast_service/values.yaml --namespace prod
+                    helm upgrade --install app-movie_prod ./movie_service --values=./movie_service/values.yaml --namespace prod
+                    helm upgrade --install app-nginx_prod ./nginx --values=./nginx/values.yaml --namespace prod
                     '''
                 }
             }
