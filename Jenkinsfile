@@ -4,7 +4,6 @@ pipeline {
         DOCKER_ID = "mira797"
         DOCKER_IMAGE_CAST = "cast-service"
         DOCKER_IMAGE_MOVIE = "movie-service"
-        // DOCKER_IMAGE_NGINX = "nginx"
         DOCKER_TAG_CAST = "cast-v.${BUILD_ID}.0" // Tag spécifique pour cast-service
         DOCKER_TAG_MOVIE = "movie-v.${BUILD_ID}.0" // Tag spécifique pour movie-service
     }
@@ -12,7 +11,7 @@ pipeline {
     agent any
 
     stages {
-        stage('Docker Build of all images') { // docker build image stage
+        stage('Docker Build of all images') {
             steps {
                 script {
                     sh '''
@@ -34,7 +33,7 @@ pipeline {
             }
         }
 
-        stage('Docker run') { // run container from our built image
+        stage('Docker run') {
             steps {
                 script {
                     sh '''
@@ -49,7 +48,7 @@ pipeline {
             }
         }
 
-        stage('Docker Push') { // We pass the built image to our Docker Hub account
+        stage('Docker Push') {
             environment {
                 DOCKER_PASS = credentials("DOCKER_HUB_PASS") // We retrieve the Docker password from Jenkins credentials
             }
@@ -88,12 +87,14 @@ pipeline {
 
         stage('Prepare Kubernetes Secrets') {
             steps {
-                // Supprimer les secrets dans plusieurs namespaces
-                sh '''
-                kubectl delete secret postgres-secret --namespace dev || echo "Secret not found in dev, skipping deletion"
-                kubectl delete secret postgres-secret --namespace staging || echo "Secret not found in staging, skipping deletion"
-                kubectl delete secret postgres-secret --namespace prod || echo "Secret not found in prod, skipping deletion"
-                '''
+                script {
+                    sh '''
+                    # Supprimer les secrets dans plusieurs namespaces
+                    kubectl delete secret postgres-secret --namespace dev || echo "Secret not found in dev, skipping deletion"
+                    kubectl delete secret postgres-secret --namespace staging || echo "Secret not found in staging, skipping deletion"
+                    kubectl delete secret postgres-secret --namespace prod || echo "Secret not found in prod, skipping deletion"
+                    '''
+                }
             }
         }
 
@@ -101,7 +102,6 @@ pipeline {
             environment {
                 KUBECONFIG = credentials('config') // Retrieve the kubeconfig file from Jenkins credentials
             }
-
             steps {
                 script {
                     sh '''
@@ -132,7 +132,6 @@ pipeline {
             environment {
                 KUBECONFIG = credentials('config') // Retrieve the kubeconfig file from Jenkins credentials
             }
-
             steps {
                 script {
                     sh '''
@@ -149,16 +148,15 @@ pipeline {
                     cat ./cast_service/values.yaml
 
                     # Annotation des PV pour le namespace staging
-		    kubectl annotate pv movie-db-st meta.helm.sh/release-name- --overwrite
-		    kubectl annotate pv movie-db-st meta.helm.sh/release-namespace- --overwrite
+                    kubectl annotate pv movie-db-st meta.helm.sh/release-name- --overwrite
+                    kubectl annotate pv movie-db-st meta.helm.sh/release-namespace- --overwrite
 
-		    kubectl annotate pv movie-db-st meta.helm.sh/release-name=app-movie-staging --overwrite
-		    kubectl annotate pv movie-db-st meta.helm.sh/release-namespace=staging --overwrite
+                    kubectl annotate pv movie-db-st meta.helm.sh/release-name=app-movie-staging --overwrite
+                    kubectl annotate pv movie-db-st meta.helm.sh/release-namespace=staging --overwrite
 
                     # Déploiement via Helm dans staging
                     helm upgrade --install app-cast-staging ./cast_service --values=./cast_service/values.yaml --namespace staging
                     helm upgrade --install app-movie-staging ./movie_service --values=./movie_service/values.yaml --namespace staging
-
                     helm upgrade --install app-nginx-staging ./nginx --values=./nginx/values.yaml --namespace staging
                     '''
                 }
@@ -169,7 +167,6 @@ pipeline {
             environment {
                 KUBECONFIG = credentials('config') // Retrieve the kubeconfig file from Jenkins credentials
             }
-
             steps {
                 timeout(time: 15, unit: "MINUTES") {
                     input message: 'Do you want to deploy in production?', ok: 'Yes'
@@ -186,8 +183,15 @@ pipeline {
                     # Mise à jour des namespaces dans les fichiers de valeurs
                     sed -i '/namespace:/s/staging/prod/' ./cast_service/values.yaml
                     sed -i '/namespace:/s/staging/prod/' ./movie_service/values.yaml
-                    sed -i '/namespace:/s/dev/staging/' ./nginx/values.yaml
+                    sed -i '/namespace:/s/staging/prod/' ./nginx/values.yaml
                     cat ./cast_service/values.yaml
+
+                    # Annotation des PV pour le namespace prod
+                    kubectl annotate pv movie-db-st meta.helm.sh/release-name- --overwrite
+                    kubectl annotate pv movie-db-st meta.helm.sh/release-namespace- --overwrite
+
+                    kubectl annotate pv movie-db-st meta.helm.sh/release-name=app-movie-prod --overwrite
+                    kubectl annotate pv movie-db-st meta.helm.sh/release-namespace=prod --overwrite
 
                     # Déploiement via Helm dans prod
                     helm upgrade --install app-cast-prod ./cast_service --values=./cast_service/values.yaml --namespace prod
