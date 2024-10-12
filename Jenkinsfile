@@ -147,12 +147,10 @@ pipeline {
                 }
             }
         }
-
         stage('Deployment in staging') {
             environment {
                 KUBECONFIG = credentials('config') // Retrieve the kubeconfig file from Jenkins credentials
             }
-
             steps {
                 script {
                     sh '''
@@ -165,13 +163,20 @@ pipeline {
 
                     # Assurez-vous que les permissions sont correctes
                     chmod 600 ~/.kube/config
-		    sed -i '/namespace:/s/dev/staging/' ./cast_service/values.yaml
-		    sed -i '/namespace:/s/dev/staging/' ./movie_service/values.yaml
-		    cat ./cast_service/values.yaml
 
-		
-                    #sed -i "s+tag.*+tag: ${DOCKER_TAG_CAST}+g" ./cast_service/values.yaml
-                    #sed -i "s+tag.*+tag: ${DOCKER_TAG_MOVIE}+g" ./movie_service/values.yaml
+                    # Mise à jour des namespaces dans les fichiers de valeurs
+                    sed -i '/namespace:/s/dev/staging/' ./cast_service/values.yaml
+                    sed -i '/namespace:/s/dev/staging/' ./movie_service/values.yaml
+                    cat ./cast_service/values.yaml
+
+                    # Annoter le PV pour la base de données db
+                    kubectl annotate pv db meta.helm.sh/release-namespace=staging --overwrite
+
+                    # Mise à jour des tags Docker dans les fichiers de valeurs
+                    # sed -i "s+tag.*+tag: ${DOCKER_TAG_CAST}+g" ./cast_service/values.yaml
+                    # sed -i "s+tag.*+tag: ${DOCKER_TAG_MOVIE}+g" ./movie_service/values.yaml
+
+                    # Déploiements via Helm
                     helm upgrade --install app-cast ./cast_service --values=./cast_service/values.yaml --namespace staging
                     helm upgrade --install app-movie ./movie_service --values=./movie_service/values.yaml --namespace staging
                     helm upgrade --install app-nginx ./nginx --values=./nginx/values.yaml --namespace staging
@@ -179,6 +184,7 @@ pipeline {
                 }
             }
         }
+
 
         stage('Deployment in prod') {
             environment {
