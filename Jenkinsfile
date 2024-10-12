@@ -148,10 +148,8 @@ pipeline {
                     cat ./cast_service/values.yaml
 
                     # Annotation des PV pour le namespace staging
-                    #kubectl annotate pv movie-db-st meta.helm.sh/release-namespace=staging --overwrite
-                    #kubectl annotate svc nginx -n dev "meta.helm.sh/release-namespace=staging" --overwrite
-                    #kubectl annotate deployment nginx -n dev "meta.helm.sh/release-name-" --overwrite
-                    #kubectl annotate deployment nginx -n dev "meta.helm.sh/release-namespace-" --overwrite
+		    kubectl annotate pv movie-db-st meta.helm.sh/release-name- --overwrite
+		    kubectl annotate pv movie-db-st meta.helm.sh/release-namespace- --overwrite
 
                     # Déploiement via Helm dans staging
                     helm upgrade --install app-cast-staging ./cast_service --values=./cast_service/values.yaml --namespace staging
