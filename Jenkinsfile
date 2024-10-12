@@ -170,8 +170,8 @@ pipeline {
 		    cat ./cast_service/values.yaml
 
 		
-                    sed -i "s+tag.*+tag: ${DOCKER_TAG_CAST}+g" ./cast_service/values.yaml
-                    sed -i "s+tag.*+tag: ${DOCKER_TAG_MOVIE}+g" ./movie_service/values.yaml
+                    #sed -i "s+tag.*+tag: ${DOCKER_TAG_CAST}+g" ./cast_service/values.yaml
+                    #sed -i "s+tag.*+tag: ${DOCKER_TAG_MOVIE}+g" ./movie_service/values.yaml
                     helm upgrade --install app-cast ./cast_service --values=./cast_service/values.yaml --namespace staging
                     helm upgrade --install app-movie ./movie_service --values=./movie_service/values.yaml --namespace staging
                     helm upgrade --install app-nginx ./nginx --values=./nginx/values.yaml --namespace staging
@@ -203,11 +203,12 @@ pipeline {
                     # Assurez-vous que les permissions sont correctes
                     chmod 600 ~/.kube/config
 
-                    sed -i "s/namespace: dev/namespace: prod/g" ./cast_service/values.yaml
-                    sed -i "s/namespace: dev/namespace: prod/g" ./movie_service/values.yaml
+                    sed -i '/namespace:/s/staging/prod/' ./cast_service/values.yaml
+                    sed -i '/namespace:/s/staging/prod/' ./movie_service/values.yaml
+                    cat ./cast_service/values.yaml
 
-                    sed -i "s+tag.*+tag: ${DOCKER_TAG_CAST}+g" ./cast_service/values.yaml
-                    sed -i "s+tag.*+tag: ${DOCKER_TAG_MOVIE}+g" ./movie_service/values.yaml
+                    #sed -i "s+tag.*+tag: ${DOCKER_TAG_CAST}+g" ./cast_service/values.yaml
+                    #sed -i "s+tag.*+tag: ${DOCKER_TAG_MOVIE}+g" ./movie_service/values.yaml
                     helm upgrade --install app-cast ./cast_service --values=./cast_service/values.yaml --namespace prod
                     helm upgrade --install app-movie ./movie_service --values=./movie_service/values.yaml --namespace prod
                     helm upgrade --install app-nginx ./nginx --values=./nginx/values.yaml --namespace prod
