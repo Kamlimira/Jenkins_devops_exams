@@ -11,4 +11,4 @@ spec:
     - protocol: TCP
       port: 8081  # Le port sur lequel le service écoute
       targetPort: 8081  # Le port où Nginx écoute dans le conteneur
-      nodePort: 30081  # Le port externe sur lequel Nginx sera accessible (port dans la plage 30000-32767)
+      #nodePort: 30081  # Le port externe sur lequel Nginx sera accessible (port dans la plage 30000-32767)
