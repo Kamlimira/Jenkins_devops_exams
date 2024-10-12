@@ -172,6 +172,7 @@ pipeline {
                     # Annoter le PV pour la base de données db
                     #kubectl annotate pv db meta.helm.sh/release-namespace=staging --overwrite
 		    kubectl annotate pv movie-db-st meta.helm.sh/release-namespace=staging --overwrite
+                    kubectl annotate svc nginx -n dev "meta.helm.sh/release-namespace=staging" --overwrite
 
                     # Mise à jour des tags Docker dans les fichiers de valeurs
                     # sed -i "s+tag.*+tag: ${DOCKER_TAG_CAST}+g" ./cast_service/values.yaml
