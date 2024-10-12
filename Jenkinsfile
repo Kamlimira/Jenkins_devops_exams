@@ -39,10 +39,10 @@ pipeline {
             steps {
                 script {
                     sh '''
-                    # Exécuter cast-service sur le port 8081
+                    # Exécuter cast-service sur le port 8090
                     docker run -d -p 8090:8000 --name cast-service $DOCKER_ID/$DOCKER_IMAGE_CAST:$DOCKER_TAG_CAST
 
-                    # Exécuter movie-service sur le port 8082 (pas 8081 pour éviter le conflit)
+                    # Exécuter movie-service sur le port 8001 (pour éviter le conflit de ports)
                     docker run -d -p 8001:8000 --name movie-service $DOCKER_ID/$DOCKER_IMAGE_MOVIE:$DOCKER_TAG_MOVIE
 
                     # docker run -d -p 8083:8080 --name nginx $DOCKER_ID/$DOCKER_IMAGE_NGINX:$DOCKER_TAG_NGINX
@@ -59,10 +59,10 @@ pipeline {
                     sh '''
                     sleep 10
 
-                    # Tester si cast-service répond sur le port 8081
+                    # Tester si cast-service répond sur le port 8090
                     curl 3.250.102.222:8090 || exit 1
 
-                    # Tester si movie-service répond sur le port 8082
+                    # Tester si movie-service répond sur le port 8001
                     curl 3.250.102.222:8001 || exit 1
                     '''
                 }
@@ -70,9 +70,9 @@ pipeline {
         }
        */
 
-        stage('Docker Push') { // We pass the built image to our docker hub account
+        stage('Docker Push') { // We pass the built image to our Docker Hub account
             environment {
-                DOCKER_PASS = credentials("DOCKER_HUB_PASS") // We retrieve docker password from secret text saved on Jenkins
+                DOCKER_PASS = credentials("DOCKER_HUB_PASS") // We retrieve the Docker password from Jenkins credentials
             }
 
             steps {
@@ -87,18 +87,23 @@ pipeline {
         }
 
         stage('Configure Kubernetes Access') {
-        	environment
-        	{
-       		KUBECONFIG = credentials("config") // we retrieve kubeconfig from secret file called config saved on jenkins
-	    	}
+            environment {
+                KUBECONFIG = credentials('config') // Retrieve the kubeconfig file from Jenkins credentials
+            }
             steps {
-                // Créer le répertoire .kube et ajouter le fichier kubeconfig
-                sh '''
-                rm -Rf .kube
-                mkdir -p ~/.kube
-                echo "$KUBECONFIG" > ~/.kube/config
-                chmod 600 ~/.kube/config
-                '''
+                script {
+                    sh '''
+                    # Supprimer le répertoire .kube s'il existe
+                    rm -Rf ~/.kube
+
+                    # Créer le répertoire .kube et y ajouter le fichier kubeconfig
+                    mkdir -p ~/.kube
+                    echo "$KUBECONFIG" > ~/.kube/config
+
+                    # Assurez-vous que les permissions sont correctes
+                    chmod 600 ~/.kube/config
+                    '''
+                }
             }
         }
 
@@ -113,37 +118,27 @@ pipeline {
             }
         }
 
-
-
         stage('Deployment in dev') {
             steps {
                 script {
                     sh '''
-                    #rm -Rf .kube
-                    #mkdir .kube
-                    #cat $KUBECONFIG > .kube/config
                     ls -l ./movie_service/values.yaml
                     sed -i "s+tag.*+tag: ${DOCKER_TAG_CAST}+g" ./cast_service/values.yaml
                     sed -i "s+tag.*+tag: ${DOCKER_TAG_MOVIE}+g" ./movie_service/values.yaml
 
                     helm upgrade --install app-cast ./cast_service --values=./cast_service/values.yaml --namespace dev
-                    helm upgrade --install app-movie ./movie_service --values= ./movie_service/values.yaml --namespace dev
-                    helm upgrade --install app-nginx ./nginx --values= ./nginx/values.yaml --namespace dev
+                    helm upgrade --install app-movie ./movie_service --values=./movie_service/values.yaml --namespace dev
+                    helm upgrade --install app-nginx ./nginx --values=./nginx/values.yaml --namespace dev
                     '''
                 }
             }
         }
 
         stage('Deployment in staging') {
-
             steps {
                 script {
                     sh '''
-                    #rm -Rf .kube
-                    #mkdir .kube
-                    #cat $KUBECONFIG > .kube/config
-		    
-		    sed -i "s/namespace: dev/namespace: staging/g" ./cast_service/values.yaml
+                    sed -i "s/namespace: dev/namespace: staging/g" ./cast_service/values.yaml
                     sed -i "s/namespace: dev/namespace: staging/g" ./movie_service/values.yaml
 
                     sed -i "s+tag.*+tag: ${DOCKER_TAG_CAST}+g" ./cast_service/values.yaml
@@ -157,8 +152,6 @@ pipeline {
         }
 
         stage('Deployment in prod') {
-
-
             steps {
                 timeout(time: 15, unit: "MINUTES") {
                     input message: 'Do you want to deploy in production ?', ok: 'Yes'
@@ -166,9 +159,6 @@ pipeline {
 
                 script {
                     sh '''
-                    #rm -Rf .kube
-                    #mkdir .kube
-                    #cat $KUBECONFIG > .kube/config
                     sed -i "s/namespace: dev/namespace: prod/g" ./cast_service/values.yaml
                     sed -i "s/namespace: dev/namespace: prod/g" ./movie_service/values.yaml
 
