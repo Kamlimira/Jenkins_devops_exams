@@ -4,7 +4,7 @@ metadata:
   name: nginx
   namespace: {{ .Values.namespace }}
 spec:
-  type: LoadBalancer  # Utilise NodePort pour exposer Nginx via un port spécifique sur chaque nœud
+  type: NodePort  # Utilise NodePort pour exposer Nginx via un port spécifique sur chaque nœud
   selector:
     app: nginx
   ports:
